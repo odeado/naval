@@ -148,17 +148,52 @@ input[type=text]::placeholder{letter-spacing:1px;text-transform:none;color:var(-
 .pip.active-p{background:var(--cyan);box-shadow:0 0 6px var(--cyanGlow)}
 .ship-ck{color:var(--green);font-size:14px;text-shadow:0 0 6px var(--green)}
 
-/* ── FLEET STATUS ────────────────────────────── */
-.fleet-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:440px}
-.fleet-col{}
-.fleet-head{font-size:8px;color:var(--textDim);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;font-weight:700}
-.fleet-row{display:flex;align-items:center;gap:5px;margin-bottom:5px}
-.fleet-emoji{font-size:11px}
-.fleet-name{flex:1;font-size:9px;color:var(--text);font-weight:500}
-.fleet-name.dead{text-decoration:line-through;color:var(--textDim)}
-.fleet-pips{display:flex;gap:2px}
-.fpip{width:6px;height:6px;border-radius:1px;background:var(--border)}
-.fpip.dmg{background:var(--red)}
+/* ── BATTLE TABS ─────────────────────────────── */
+.battle-tabs{display:flex;width:100%;max-width:440px;background:var(--surf);
+  border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;position:relative}
+.btab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 8px;border:none;border-radius:6px;font-family:'Exo 2',sans-serif;
+  font-size:11px;font-weight:800;letter-spacing:1.5px;cursor:pointer;
+  transition:all .25s;background:transparent;color:var(--textDim);text-transform:uppercase;position:relative}
+.btab.active-attack{background:linear-gradient(135deg,rgba(0,200,255,.15),rgba(0,200,255,.05));
+  color:var(--cyan);border:1px solid rgba(0,200,255,.3)}
+.btab.active-defense{background:linear-gradient(135deg,rgba(0,232,112,.1),rgba(0,232,112,.03));
+  color:var(--green);border:1px solid rgba(0,232,112,.25)}
+.btab-count{font-size:10px;font-weight:900;background:var(--bg);border-radius:10px;
+  padding:1px 6px;min-width:20px;text-align:center}
+.btab.active-attack .btab-count{background:rgba(0,200,255,.2);color:var(--cyan)}
+.btab.active-defense .btab-count{background:rgba(0,232,112,.15);color:var(--green)}
+.tab-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;
+  background:var(--red);display:none;animation:dotPulse 1s ease-in-out infinite}
+.tab-dot.show{display:block}
+@keyframes dotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+
+/* ── TAB PANELS ──────────────────────────────── */
+.tab-panel{width:100%;max-width:440px;display:none}
+.tab-panel.active{display:block}
+
+/* ── FLEET DAMAGE PANEL ──────────────────────── */
+.fleet-section{width:100%;max-width:440px;background:var(--surf);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.fleet-section-head{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;border-bottom:1px solid var(--border)}
+.fsh-label{font-size:8px;font-weight:800;letter-spacing:3px;color:var(--textDim);text-transform:uppercase}
+.fsh-count{font-size:9px;font-weight:700}
+.fsh-count.enemy{color:var(--red)}
+.fsh-count.mine{color:var(--green)}
+.fleet-rows{padding:8px 12px;display:flex;flex-direction:column;gap:7px}
+.sdr{display:flex;align-items:center;gap:8px}
+.sdr-emoji{font-size:13px;width:20px;text-align:center;flex-shrink:0}
+.sdr-name{font-size:10px;font-weight:600;color:var(--text);width:80px;flex-shrink:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdr-name.dead{color:var(--textDim);text-decoration:line-through}
+.sdr-bar-wrap{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.sdr-bar-fill{height:100%;border-radius:4px;transition:width .4s ease,background .4s ease}
+.sdr-tag{font-size:8px;font-weight:800;letter-spacing:1px;flex-shrink:0;width:50px;text-align:right}
+.sdr-tag.ok{color:var(--green)}
+.sdr-tag.dmg{color:var(--gold)}
+.sdr-tag.crit{color:var(--red)}
+.sdr-tag.sunk{color:var(--textDim)}
 
 /* ── STATS ───────────────────────────────────── */
 .stats-grid{display:grid;grid-template-columns:1fr 1px 1fr;gap:12px;width:100%}
@@ -242,9 +277,11 @@ input[type=text]::placeholder{letter-spacing:1px;text-transform:none;color:var(-
     <input type="text" id="join-code-input" placeholder="Código de 4 letras" maxlength="4">
     <button class="btn btn-outline" onclick="joinGame()">🔍 UNIRSE A PARTIDA</button>
     <p id="home-err" style="color:var(--red);font-size:11px;text-align:center;min-height:14px;letter-spacing:.5px"></p>
+    <div class="sep"></div>
+    <button class="btn btn-gold" onclick="createGameVsAI()">🤖 JUGAR VS MÁQUINA</button>
   </div>
 
-  <p class="dim" style="max-width:280px">Crea una sala · comparte el código · ¡a hundir flotas!</p>
+  <p class="dim" style="max-width:280px">Online con amigos · o desafía a la IA en solitario</p>
 </div>
 
 <!-- ════════════════════════════════════
@@ -292,22 +329,54 @@ input[type=text]::placeholder{letter-spacing:1px;text-transform:none;color:var(-
 <!-- ════════════════════════════════════
      BATTLE
 ════════════════════════════════════ -->
-<div id="screen-battle" class="screen" style="padding-top:10px;gap:10px">
+<div id="screen-battle" class="screen" style="padding-top:10px;gap:8px">
   <div id="turn-bar" class="status-bar s-wait">⏳ CARGANDO…</div>
 
-  <div class="section-label">
-    <span>🎯 Aguas Enemigas</span>
-    <span class="count" id="my-hits">0 impactos</span>
+  <!-- ── TAB SELECTOR ── -->
+  <div class="battle-tabs">
+    <button class="btab active-attack" id="btab-attack" onclick="setTab('attack')">
+      🎯 ATACAR
+      <span class="btab-count" id="btab-attack-count">0</span>
+      <span class="tab-dot" id="tab-dot-attack"></span>
+    </button>
+    <button class="btab" id="btab-defense" onclick="setTab('defense')">
+      🛡 MI FLOTA
+      <span class="btab-count" id="btab-defense-count">0</span>
+      <span class="tab-dot" id="tab-dot-defense"></span>
+    </button>
   </div>
-  <div id="board-enemy" class="board-outer"></div>
 
-  <div class="section-label">
-    <span>🛡 Tu Flota</span>
-    <span class="count" id="opp-hits">0 recibidos</span>
+  <!-- ── ATTACK PANEL ── -->
+  <div class="tab-panel active" id="panel-attack">
+    <div class="section-label">
+      <span>🎯 Aguas Enemigas</span>
+      <span class="count" id="my-hits">0 impactos</span>
+    </div>
+    <div id="board-enemy" class="board-outer"></div>
+    <div class="fleet-section" style="margin-top:8px">
+      <div class="fleet-section-head">
+        <span class="fsh-label">Flota Enemiga</span>
+        <span class="fsh-count enemy" id="enemy-fleet-count">0/5 hundidos</span>
+      </div>
+      <div class="fleet-rows" id="enemy-fleet-rows"></div>
+    </div>
   </div>
-  <div id="board-mine" class="board-outer"></div>
 
-  <div class="fleet-panel" id="fleet-panel"></div>
+  <!-- ── DEFENSE PANEL ── -->
+  <div class="tab-panel" id="panel-defense">
+    <div class="section-label">
+      <span>🛡 Tu Flota</span>
+      <span class="count" id="opp-hits">0 recibidos</span>
+    </div>
+    <div id="board-mine" class="board-outer"></div>
+    <div class="fleet-section" style="margin-top:8px">
+      <div class="fleet-section-head">
+        <span class="fsh-label">Estado de tu Flota</span>
+        <span class="fsh-count mine" id="my-fleet-count">5/5 activos</span>
+      </div>
+      <div class="fleet-rows" id="my-fleet-rows"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ════════════════════════════════════
@@ -349,18 +418,14 @@ input[type=text]::placeholder{letter-spacing:1px;text-transform:none;color:var(-
 <script>
 // ── FIREBASE CONFIG ── reemplaza con los valores de tu proyecto
 const firebaseConfig = {
-  
- apiKey: "AIzaSyDZ0G1TAh72Si8nQIsdKAm8hbLM3ldv9F4",
-  authDomain: "games-18269.firebaseapp.com",
-  databaseURL: "https://games-18269-default-rtdb.firebaseio.com",
-  projectId: "games-18269",
-  storageBucket: "games-18269.firebasestorage.app",
-  messagingSenderId: "561644833974",
-  appId: "1:561644833974:web:dd0fad8022617c13236a17",
-  measurementId: "G-K398SCMLL1"
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROYECTO.firebaseapp.com",
+  databaseURL:       "https://TU_PROYECTO-default-rtdb.firebaseio.com",
+  projectId:         "TU_PROYECTO",
+  storageBucket:     "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
 };
-
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -379,6 +444,8 @@ const SHIPS=[
 let role=null, code=null, gRef=null, unsubG=null;
 let pBoard=null, pShips=[], pIdx=0, ori='H', hov=null;
 let gSnap=null, myShots=[], oppShots=[], prevOppLen=0, firing=false;
+let currentTab='attack';
+let vsAI=false, localGame=null, aiQueue=[];
 
 // ── SCREENS ────────────────────────────────────
 function show(id){
@@ -423,21 +490,28 @@ async function joinGame(){
 }
 
 function cancelGame(){
+  if(vsAI){vsAI=false;localGame=null;aiQueue=[];show('home');return;}
   if(gRef)gRef.remove().catch(()=>{});
   if(unsubG)gRef.off('value',unsubG);
   show('home');
 }
 
+function createGameVsAI(){
+  vsAI=true; role='p1'; code=null; gRef=null;
+  startPlacement();
+}
+
 // ── PLACEMENT ──────────────────────────────────
 function startPlacement(){
   pBoard=emptyBoard(); pShips=[]; pIdx=0; ori='H'; hov=null;
-  document.getElementById('pl-room-lbl').textContent='Sala: '+code;
+  document.getElementById('pl-room-lbl').textContent=vsAI?'🤖 VS Máquina':'Sala: '+code;
   document.getElementById('btn-ready').style.display='none';
   document.getElementById('wait-pl').style.display='none';
   document.getElementById('btn-reset').style.display='none';
   document.getElementById('pl-ctrl').style.display='flex';
   renderPBoard(); renderShipList(); show('placement');
 
+  if(vsAI)return; // sin Firebase
   if(unsubG)gRef.off('value',unsubG);
   unsubG=gRef.on('value',snap=>{
     const d=snap.val(); if(!d) return;
@@ -494,6 +568,24 @@ async function markReady(){
   document.getElementById('btn-ready').style.display='none';
   document.getElementById('wait-pl').style.display='flex';
   document.getElementById('pl-ctrl').style.display='none';
+
+  if(vsAI){
+    // Generar flota de la IA y arrancar batalla local
+    const ai=doRandom();
+    localGame={
+      status:'battle',
+      p1board:JSON.stringify(pBoard), p1ships:JSON.stringify(pShips),
+      p2board:JSON.stringify(ai.board), p2ships:JSON.stringify(ai.ships),
+      p1name:'Tú', p2name:'CPU',
+      turn:'p1', shots:{}, winner:null
+    };
+    myShots=[]; oppShots=[]; prevOppLen=0; firing=false; aiQueue=[];
+    gSnap=localGame;
+    show('battle');
+    renderBattle(localGame);
+    return;
+  }
+
   const upd={};
   upd[role+'board']=JSON.stringify(pBoard);
   upd[role+'ships']=JSON.stringify(pShips);
@@ -561,6 +653,17 @@ function renderShipList(){
   });
 }
 
+// ── TAB SWITCH ─────────────────────────────────
+function setTab(tab){
+  currentTab=tab;
+  ['attack','defense'].forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('active',t===tab);
+    const btn=document.getElementById('btab-'+t);
+    btn.className='btab'+(t===tab?(t==='attack'?' active-attack':' active-defense'):'');
+    document.getElementById('tab-dot-'+t).classList.remove('show');
+  });
+}
+
 // ── BATTLE ─────────────────────────────────────
 function startBattle(init){
   myShots=[]; oppShots=[]; prevOppLen=0; firing=false; gSnap=init;
@@ -600,7 +703,7 @@ function renderBattle(d){
   const myTurn=d.turn===role;
   const bar=document.getElementById('turn-bar');
   bar.className='status-bar '+(myTurn?'s-my':'s-opp');
-  bar.textContent=myTurn?'🎯 TU TURNO — DISPARA':'⏳ TURNO DEL OPONENTE';
+  bar.textContent=myTurn?'🎯 TU TURNO — DISPARA':(vsAI?'🤖 TURNO DE LA IA…':'⏳ TURNO DEL OPONENTE');
 
   const mh=myShots.filter(s=>s.result==='hit').length;
   const oh=oppShots.filter(s=>s.result==='hit').length;
@@ -614,7 +717,20 @@ function renderBattle(d){
 
   renderBBoard('board-enemy',oppBrd,myShots, false,myTurn&&!firing,oppShipsD);
   renderBBoard('board-mine', myBrd, oppShots,true, false,            myShipsD);
-  renderFleet(oppShipsD, myShipsD);
+  renderFleetPanel('enemy-fleet-rows','enemy-fleet-count',oppShipsD,'enemy');
+  renderFleetPanel('my-fleet-rows','my-fleet-count',myShipsD,'mine');
+
+  // tab counts
+  document.getElementById('btab-attack-count').textContent=mh;
+  document.getElementById('btab-defense-count').textContent=oh;
+
+  // auto-switch: my turn → attack board; opp turn → defense board
+  const target=myTurn?'attack':'defense';
+  if(currentTab!==target){
+    setTab(target);
+    // show notification dot on the newly-active tab so player notices the switch
+    document.getElementById('tab-dot-'+target).classList.add('show');
+  }
 }
 
 function renderBBoard(elId,board,shots,showShips,clickable,ships){
@@ -656,23 +772,38 @@ function renderBBoard(elId,board,shots,showShips,clickable,ships){
   }
 }
 
-function renderFleet(oppShipsD,myShipsD){
-  const el=document.getElementById('fleet-panel');
-  el.innerHTML=`<div class="fleet-col"><div class="fleet-head">Flota Enemiga</div>${fleetHTML(oppShipsD,'dmg')}</div>
-  <div class="fleet-col"><div class="fleet-head">Tu Flota</div>${fleetHTML(myShipsD,'dmg')}</div>`;
-}
-function fleetHTML(ships,hitCls){
-  return ships.map(s=>{
-    const dead=s.hits.length>=s.cells.length;
-    const pips=s.cells.map((_,i)=>`<div class="fpip ${i<s.hits.length?hitCls:''}"></div>`).join('');
-    return `<div class="fleet-row">
-      <span class="fleet-emoji">${s.emoji}</span>
-      <span class="fleet-name${dead?' dead':''}">${s.name}</span>
-      <div class="fleet-pips">${pips}</div></div>`;
+function renderFleetPanel(rowsId,countId,ships,side){
+  const rowsEl=document.getElementById(rowsId);
+  const countEl=document.getElementById(countId);
+  if(!rowsEl||!countEl)return;
+  const sunkCount=ships.filter(s=>s.hits.length>=s.cells.length).length;
+  if(side==='enemy'){
+    countEl.textContent=sunkCount+'/'+ships.length+' hundidos';
+  } else {
+    countEl.textContent=(ships.length-sunkCount)+'/'+ships.length+' activos';
+  }
+  rowsEl.innerHTML=ships.map(s=>{
+    const hp=s.cells.length, hits=s.hits.length;
+    const dead=hits>=hp;
+    const pct=dead?0:Math.round((1-hits/hp)*100);
+    let fillColor,tag,tagCls;
+    if(dead){fillColor='var(--textDim)';tag='HUNDIDO';tagCls='sunk';}
+    else if(hits===0){fillColor='var(--green)';tag='INTACTO';tagCls='ok';}
+    else if(pct>50){fillColor='var(--gold)';tag='DAÑO';tagCls='dmg';}
+    else{fillColor='var(--red)';tag='CRÍTICO';tagCls='crit';}
+    return `<div class="sdr">
+      <span class="sdr-emoji">${s.emoji}</span>
+      <span class="sdr-name${dead?' dead':''}">${s.name}</span>
+      <div class="sdr-bar-wrap">
+        <div class="sdr-bar-fill" style="width:${pct}%;background:${fillColor}"></div>
+      </div>
+      <span class="sdr-tag ${tagCls}">${tag}</span>
+    </div>`;
   }).join('');
 }
 
 async function fire(r,c){
+  if(vsAI){fireLocal(r,c);return;}
   if(!gSnap||gSnap.turn!==role||firing)return;
   if(myShots.some(s=>s.r===r&&s.c===c))return;
   firing=true;
@@ -690,16 +821,94 @@ async function fire(r,c){
     const ship=updShips.find(s=>s.cells.some(([sr,sc])=>sr===r&&sc===c));
     const sunk=ship&&ship.hits.length>=ship.cells.length;
     const won=updShips.every(s=>s.hits.length>=s.cells.length);
-    showFloat(sunk?`💥 ¡Hundiste el ${ship.emoji} ${ship.name}!`
-      :isHit?`🔥 ¡Impacto en ${coord}!`:`💧 Fallo en ${coord}`);
+    showFloat(sunk?`💥 ¡Hundiste el ${ship.emoji} ${ship.name}! ¡Sigue disparando!`
+      :isHit?`🔥 ¡Impacto en ${coord}! ¡Otro disparo!`:`💧 Fallo en ${coord} — turno del oponente`);
     const key=gRef.child('shots').push().key;
     const upd={};
     upd['shots/'+key]={by:role,r,c,result,ts:Date.now()};
     upd[opp+'ships']=JSON.stringify(updShips);
-    upd['turn']=won?null:opp;
+    // impacto → sigue el mismo turno; fallo → pasa al oponente
+    upd['turn']=won?null:(isHit?role:opp);
     if(won)upd['winner']=role;
     await gRef.update(upd);
   }finally{firing=false;}
+}
+
+// ── VS AI LOCAL BATTLE ─────────────────────────
+function fireLocal(r,c){
+  if(!localGame||localGame.turn!=='p1'||firing)return;
+  if(myShots.some(s=>s.r===r&&s.c===c))return;
+  firing=true;
+  const oppBrd=JSON.parse(localGame.p2board);
+  const isHit=oppBrd[r][c]===1;
+  const result=isHit?'hit':'miss';
+  const coord=LETTERS[r]+(c+1);
+  const oppShipsNow=JSON.parse(localGame.p2ships);
+  const updShips=oppShipsNow.map(s=>{
+    if(s.cells.some(([sr,sc])=>sr===r&&sc===c))return{...s,hits:[...s.hits,[r,c]]};
+    return s;
+  });
+  const ship=updShips.find(s=>s.cells.some(([sr,sc])=>sr===r&&sc===c));
+  const sunk=ship&&ship.hits.length>=ship.cells.length;
+  const won=updShips.every(s=>s.hits.length>=s.cells.length);
+  showFloat(sunk?`💥 ¡Hundiste el ${ship.emoji} ${ship.name}! ¡Sigue disparando!`
+    :isHit?`🔥 ¡Impacto en ${coord}! ¡Otro disparo!`:`💧 Fallo en ${coord} — turno de la IA`);
+  localGame.shots['p1_'+Date.now()+'_'+r+c]={by:'p1',r,c,result,ts:Date.now()};
+  localGame.p2ships=JSON.stringify(updShips);
+  localGame.turn=won?null:(isHit?'p1':'p2');
+  if(won)localGame.winner='p1';
+  const all=Object.values(localGame.shots);
+  myShots=all.filter(s=>s.by==='p1'); oppShots=all.filter(s=>s.by==='p2');
+  gSnap=localGame; renderBattle(localGame); firing=false;
+  if(won){setTimeout(()=>showResult(localGame),1200);return;}
+  if(!isHit)setTimeout(aiShoot,900);
+}
+
+function aiShoot(){
+  if(!vsAI||!localGame||localGame.turn!=='p2')return;
+  const myBrd=JSON.parse(localGame.p1board);
+  const myShipsNow=JSON.parse(localGame.p1ships);
+  const shotSet=new Set(oppShots.map(s=>s.r+','+s.c));
+  // Elegir celda: cola de prioridad primero, luego tablero de ajedrez aleatorio
+  let r=-1,c=-1;
+  while(aiQueue.length>0){const[pr,pc]=aiQueue.shift();if(!shotSet.has(pr+','+pc)){r=pr;c=pc;break;}}
+  if(r===-1){
+    let pool=[];
+    for(let i=0;i<10;i++)for(let j=0;j<10;j++)if(!shotSet.has(i+','+j)&&(i+j)%2===0)pool.push([i,j]);
+    if(!pool.length)for(let i=0;i<10;i++)for(let j=0;j<10;j++)if(!shotSet.has(i+','+j))pool.push([i,j]);
+    if(!pool.length)return;
+    [r,c]=pool[Math.floor(Math.random()*pool.length)];
+  }
+  const isHit=myBrd[r][c]===1;
+  const result=isHit?'hit':'miss';
+  const coord=LETTERS[r]+(c+1);
+  const updShips=myShipsNow.map(s=>{
+    if(s.cells.some(([sr,sc])=>sr===r&&sc===c))return{...s,hits:[...s.hits,[r,c]]};
+    return s;
+  });
+  const ship=updShips.find(s=>s.cells.some(([sr,sc])=>sr===r&&sc===c));
+  const sunk=ship&&ship.hits.length>=ship.cells.length;
+  const won=updShips.every(s=>s.hits.length>=s.cells.length);
+  // Actualizar cola IA
+  if(isHit&&!sunk){
+    [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{
+      if(nr>=0&&nr<10&&nc>=0&&nc<10&&!shotSet.has(nr+','+nc))aiQueue.unshift([nr,nc]);
+    });
+  }
+  if(sunk){const ss=new Set(ship.cells.map(([a,b])=>a+','+b));aiQueue=aiQueue.filter(([a,b])=>!ss.has(a+','+b));}
+  if(won)showFloat('💀 ¡La IA hundió toda tu flota!');
+  else if(sunk){triggerFlash();showFloat(`💣 ¡La IA hundió tu ${ship.emoji} ${ship.name}! Sigue atacando…`);}
+  else if(isHit){triggerFlash();showFloat(`💥 ¡La IA te impactó en ${coord}!`);}
+  else showFloat(`💧 La IA falló en ${coord} — ¡tu turno!`);
+  localGame.shots['p2_'+Date.now()+'_'+r+c]={by:'p2',r,c,result,ts:Date.now()};
+  localGame.p1ships=JSON.stringify(updShips);
+  localGame.turn=won?null:(isHit?'p2':'p1');
+  if(won)localGame.winner='p2';
+  const all=Object.values(localGame.shots);
+  myShots=all.filter(s=>s.by==='p1'); oppShots=all.filter(s=>s.by==='p2');
+  gSnap=localGame; renderBattle(localGame);
+  if(won){setTimeout(()=>showResult(localGame),1200);return;}
+  if(isHit)setTimeout(aiShoot,700);
 }
 
 // ── RESULT ─────────────────────────────────────
@@ -724,6 +933,7 @@ function showResult(d){
 function playAgain(){
   if(gRef)gRef.remove().catch(()=>{});
   gRef=null; code=null; role=null; gSnap=null;
+  vsAI=false; localGame=null; aiQueue=[];
   show('home');
 }
 
